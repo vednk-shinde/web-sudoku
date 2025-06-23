@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fancy Sudoku Game</title>
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #00cec9;
+            --tertiary-color: #fd79a8;
+            --danger-color: #ff7675;
+            --dark-color: #2d3436;
+            --light-color: #f5f6fa;
+            --border-color: #dfe6e9;
+            --highlight-color: #ffeaa7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--tertiary-color));
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .game-header h1 {
+            color: var(--dark-color);
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .difficulty {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .difficulty span {
+            color: var(--dark-color);
+            font-weight: 500;
+        }
+
+        .difficulty select {
+            padding: 8px 15px;
+            border-radius: 8px;
+            border: 2px solid var(--border-color);
+            background-color: white;
+            font-size: 1rem;
+            color: var(--dark-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sudoku-board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            gap: 2px;
+            background-color: var(--dark-color);
+            border: 3px solid var(--dark-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .cell {
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .cell:hover {
+            background-color: var(--highlight-color);
+        }
+
+        .cell.fixed {
+            background-color: #f0f0f0;
+            color: var(--dark-color);
+            font-weight: 700;
+        }
+
+        .cell.selected {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .cell.highlighted {
+            background-color: rgba(0, 206, 201, 0.2);
+        }
+
+        .cell.error {
+            color: var(--danger-color);
+        }
+
+        .cell:nth-child(3n) {
+            border-right: 2px solid var(--dark-color);
+        }
+
+        .cell:nth-child(9n) {
+            border-right: none;
+        }
+
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid var(--dark-color);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .number-pad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+
+        .number-btn {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .number-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .number-btn:active {
+            transform: translateY(0);
+        }
+
+        .number-btn.eraser {
+            grid-column: span 2;
+            aspect-ratio: unset;
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-tertiary {
+            background-color: var(--tertiary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .modal-content p {
+            color: var(--dark-color);
+            margin-bottom: 20px;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .game-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="game-header">
+            <h1>Sudoku Master</h1>
+            <div class="difficulty">
+                <span>Difficulty:</span>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="game-container">
+            <div class="sudoku-board" id="board"></div>
+            <div class="controls">
+                <div class="number-pad" id="numberPad"></div>
+                <div class="action-buttons">
+                    <button id="newGame" class="btn btn-primary"><i class="fas fa-plus-circle"></i> New Game</button>
+                    <button id="checkSolution" class="btn btn-secondary"><i class="fas fa-check-circle"></i> Check</button>
+                    <button id="solve" class="btn btn-tertiary"><i class="fas fa-lightbulb"></i> Solve</button>
+                    <button id="clear" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Clear</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="winModal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Congratulations!</h2>
+                <p>You solved the Sudoku puzzle!</p>
+                <button id="playAgain" class="btn btn-primary">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const board = document.getElementById('board');
+            const numberPad = document.getElementById('numberPad');
+            const newGameBtn = document.getElementById('newGame');
+            const checkSolutionBtn = document.getElementById('checkSolution');
+            const solveBtn = document.getElementById('solve');
+            const clearBtn = document.getElementById('clear');
+            const difficultySelect = document.getElementById('difficulty');
+            const winModal = document.getElementById('winModal');
+            const playAgainBtn = document.getElementById('playAgain');
+            const closeModal = document.querySelector('.close');
+
+            let selectedCell = null;
+            let gameBoard = Array(9).fill().map(() => Array(9).fill(0));
+            let solution = Array(9).fill().map(() => Array(9).fill(0));
+            let fixedCells = [];
+
+            // Initialize the game
+            function initGame() {
+                createBoard();
+                createNumberPad();
+                startNewGame();
+            }
+
+            // Create the Sudoku board
+            function createBoard() {
+                board.innerHTML = '';
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        const cell = document.createElement('div');
+                        cell.classList.add('cell');
+                        cell.dataset.row = i;
+                        cell.dataset.col = j;
+                        cell.addEventListener('click', () => selectCell(cell, i, j));
+                        board.appendChild(cell);
+                    }
+                }
+            }
+
+            // Create the number pad
+            function createNumberPad() {
+                numberPad.innerHTML = '';
+                for (let i = 1; i <= 9; i++) {
+                    const btn = document.createElement('button');
+                    btn.classList.add('number-btn');
+                    btn.textContent = i;
+                    btn.addEventListener('click', () => fillNumber(i));
+                    numberPad.appendChild(btn);
+                }
+                // Add erase button
+                const eraseBtn = document.createElement('button');
+                eraseBtn.classList.add('number-btn', 'eraser');
+                eraseBtn.innerHTML = '<i class="fas fa-eraser"></i> Erase';
+                eraseBtn.addEventListener('click', eraseNumber);
+                numberPad.appendChild(eraseBtn);
+            }
+
+            // Start a new game
+            function startNewGame() {
+                // Reset game state
+                gameBoard = Array(9).fill().map(() => Array(9).fill(0));
+                fixedCells = [];
+                selectedCell = null;
+                
+                // Generate a new puzzle based on difficulty
+                const difficulty = difficultySelect.value;
+                generatePuzzle(difficulty);
+                
+                // Update the board display
+                updateBoard();
+            }
+
+            // Generate a Sudoku puzzle
+            function generatePuzzle(difficulty) {
+                // This is a simplified version - in a real app you would generate or fetch puzzles
+                // For demo purposes, we'll use a hardcoded easy puzzle
+                const easyPuzzle = [
+                    [5, 3, 0, 0, 7, 0, 0, 0, 0],
+                    [6, 0, 0, 1, 9, 5, 0, 0, 0],
+                    [0, 9, 8, 0, 0, 0, 0, 6, 0],
+                    [8, 0, 0, 0, 6, 0, 0, 0, 3],
+                    [4, 0, 0, 8, 0, 3, 0, 0, 1],
+                    [7, 0, 0, 0, 2, 0, 0, 0, 6],
+                    [0, 6, 0, 0, 0, 0, 2, 8, 0],
+                    [0, 0, 0, 4, 1, 9, 0, 0, 5],
+                    [0, 0, 0, 0, 8, 0, 0, 7, 9]
+                ];
+
+                // Copy the puzzle to the game board
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        gameBoard[i][j] = easyPuzzle[i][j];
+                        if (easyPuzzle[i][j] !== 0) {
+                            fixedCells.push(`${i}-${j}`);
+                        }
+                    }
+                }
+
+                // For demo, the solution is the same as the puzzle (not correct in real implementation)
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        solution[i][j] = easyPuzzle[i][j] || Math.floor(Math.random() * 9) + 1;
+                    }
+                }
+            }
+
+            // Update the board display
+            function updateBoard() {
+                const cells = document.querySelectorAll('.cell');
+                cells.forEach(cell => {
+                    const row = parseInt(cell.dataset.row);
+                    const col = parseInt(cell.dataset.col);
+                    const value = gameBoard[row][col];
+                    
+                    cell.textContent = value === 0 ? '' : value;
+                    cell.classList.toggle('fixed', fixedCells.includes(`${row}-${col}`));
+                    
+                    if (cell === selectedCell) {
+                        cell.classList.add('selected');
+                    } else {
+                        cell.classList.remove('selected');
+                    }
+                });
+            }
+
+            // Select a cell
+            function selectCell(cell, row, col) {
+                // Don't allow selecting fixed cells
+                if (fixedCells.includes(`${row}-${col}`)) return;
+                
+                // Deselect previous cell
+                if (selectedCell) {
+                    selectedCell.classList.remove('selected');
+                }
+                
+                // Select new cell
+                selectedCell = cell;
+                cell.classList.add('selected');
+            }
+
+            // Fill a number in the selected cell
+            function fillNumber(num) {
+                if (!selectedCell) return;
+                
+                const row = parseInt(selectedCell.dataset.row);
+                const col = parseInt(selectedCell.dataset.col);
+                
+                gameBoard[row][col] = num;
+                selectedCell.textContent = num;
+                
+                // Check if the puzzle is complete
+                if (isPuzzleComplete()) {
+                    showWinModal();
+                }
+            }
+
+            // Erase the number in the selected cell
+            function eraseNumber() {
+                if (!selectedCell) return;
+                
+                const row = parseInt(selectedCell.dataset.row);
+                const col = parseInt(selectedCell.dataset.col);
+                
+                gameBoard[row][col] = 0;
+                selectedCell.textContent = '';
+            }
+
+            // Check if the puzzle is complete
+            function isPuzzleComplete() {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        if (gameBoard[i][j] === 0) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            // Check the current solution
+            function checkSolution() {
+                // In a real implementation, you would check against the actual solution
+                alert("Solution checking would be implemented here");
+            }
+
+            // Solve the puzzle
+            function solve() {
+                // In a real implementation, you would solve the puzzle
+                alert("Auto-solve would be implemented here");
+            }
+
+            // Clear all user inputs
+            function clearBoard() {
+                for (let i = 0; i < 9; i++) {
+                    for (let j = 0; j < 9; j++) {
+                        if (!fixedCells.includes(`${i}-${j}`)) {
+                            gameBoard[i][j] = 0;
+                        }
+                    }
+                }
+                updateBoard();
+            }
+
+            // Show win modal
+            function showWinModal() {
+                winModal.style.display = 'flex';
+            }
+
+            // Event listeners
+            newGameBtn.addEventListener('click', startNewGame);
+            checkSolutionBtn.addEventListener('click', checkSolution);
+            solveBtn.addEventListener('click', solve);
+            clearBtn.addEventListener('click', clearBoard);
+            playAgainBtn.addEventListener('click', () => {
+                winModal.style.display = 'none';
+                startNewGame();
+            });
+            closeModal.addEventListener('click', () => {
+                winModal.style.display = 'none';
+            });
+
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+</html>
