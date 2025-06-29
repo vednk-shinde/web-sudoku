@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sudoku Game</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    td {
+      border: 1px solid #000;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+    }
+    input {
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      font-size: 18px;
+      border: none;
+    }
+    td:nth-child(3n) {
+      border-right: 2px solid #000;
+    }
+    tr:nth-child(3n) td {
+      border-bottom: 2px solid #000;
+    }
+    .button-container {
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 0 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Sudoku Game</h1>
+  <table id="sudoku-grid">
+    <!-- JS will generate the grid -->
+  </table>
+
+  <div class="button-container">
+    <button id="clear">Clear</button>
+    <button id="solve">Solve (Stub)</button>
+  </div>
+
+  <script>
+    // Generate 9x9 Sudoku grid
+    for (let i = 0; i < 9; i++) {
+      let row = $('<tr></tr>');
+      for (let j = 0; j < 9; j++) {
+        let cell = $('<td><input maxlength="1" type="text" /></td>');
+        row.append(cell);
+      }
+      $('#sudoku-grid').append(row);
+    }
+
+    // Input validation
+    $('#sudoku-grid input').on('input', function () {
+      let val = $(this).val();
+      if (!/^[1-9]$/.test(val)) {
+        $(this).val('');
+      }
+    });
+
+    // Clear the grid
+    $('#clear').click(function () {
+      $('#sudoku-grid input').val('');
+    });
+
+    // Solve button (stub only)
+    $('#solve').click(function () {
+      alert('Solver logic not implemented yet.');
+    });
+  </script>
+</body>
+</html>
